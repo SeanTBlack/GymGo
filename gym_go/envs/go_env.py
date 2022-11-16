@@ -65,7 +65,11 @@ class GoEnv(gym.Env):
         #print(gogame.game_ended(self.state_))
         #print(self.state_)
         self.done = gogame.game_ended(self.state_)
-        return np.copy(self.state_), self.reward(), self.done, self.info()
+        if self.done == 1: 
+            final_stats = self.reward(game_ended=True)
+        else:
+            final_stats = None
+        return np.copy(self.state_), self.reward(), self.done, self.info(), final_stats
 
     def game_ended(self):
         return self.done
@@ -129,7 +133,7 @@ class GoEnv(gym.Env):
         else:
             return 0
 
-    def reward(self):
+    def reward(self, game_ended=False):
         '''
         Return reward based on reward_method.
         heuristic: black total area - white total area
@@ -139,6 +143,12 @@ class GoEnv(gym.Env):
             Also known as Trump Taylor Scoring
         Area rule definition: https://en.wikipedia.org/wiki/Rules_of_Go#End
         '''
+        
+        if game_ended:
+            black_area, white_area = gogame.areas(self.state_)
+            area_difference = black_area - white_area
+            return (int(self.winner()==1), area_difference)
+        
         if self.reward_method == RewardMethod.REAL:
             return self.winner()
 
